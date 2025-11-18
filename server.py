@@ -9,37 +9,24 @@ def gamepasses():
     if not user_id:
         return jsonify({"error": "no userid"}), 400
 
-    # 1. Получаем игры пользователя
-    games_url = f"https://games.roblox.com/v1/users/{user_id}/games?accessFilter=Public&limit=100"
+    url = f"https://inventory.roblox.com/v1/users/{user_id}/items/GamePass?limit=100"
+
     try:
-        games_response = requests.get(games_url, timeout=5).json()
+        response = requests.get(url, timeout=5).json()
     except:
-        return jsonify({"error": "game api error"})
+        return jsonify({"error": "roblox api error"})
 
-    if "data" not in games_response:
-        return jsonify({"error": "no games"})
-
+    if "data" not in response:
+        return jsonify({"passes": []})
 
     passes = []
-
-    # 2. Перебираем игры
-    for game in games_response["data"]:
-        place_id = game["placeId"]
-
-        gp_url = f"https://games.roblox.com/v1/games/{place_id}/game-passes?limit=100"
-        try:
-            gp_response = requests.get(gp_url, timeout=5).json()
-        except:
-            continue
-
-        # 3. Если в игре есть пассы — добавляем
-        if "data" in gp_response:
-            for p in gp_response["data"]:
-                passes.append({
-                    "id": p["id"],
-                    "name": p["name"],
-                    "price": p.get("price", 0)
-                })
+    for item in response["data"]:
+        passes.append({
+            "id": item["item"]["assetId"],
+            "name": item["item"]["name"],
+            "price": 0
+        })
 
     return jsonify({"passes": passes})
+
 
